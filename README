@@ -1,0 +1,3 @@
+use 'make' to compile this
+
+the binary is in the .gitignore, so no need to worry about pushing that.
