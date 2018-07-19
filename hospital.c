@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 3
 
 static int queue[BUFFER_SIZE];
 
