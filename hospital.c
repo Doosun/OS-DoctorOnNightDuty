@@ -5,12 +5,37 @@
 
 #define BUFFER_SIZE 3
 
-static int queue[BUFFER_SIZE];
+int queue[BUFFER_SIZE] = {0};
+int queue_front = 0;
+int queue_rear = -1;
+int queue_count = 0;
+
+
+pthread_mutex_t mutex;
 
 struct patient {
     int id;
     int visits;
 };
+
+void enqueue(int id) {
+    if (queue_count < BUFFER_SIZE) {
+        queue_rear++;
+        queue[queue_rear % BUFFER_SIZE] = id;
+        queue_count++;
+    }
+}
+
+int dequeue() {
+    if (queue_count > 0) {
+        int id = queue[queue_front % BUFFER_SIZE];
+        queue_front++;
+        queue_count--;
+        return id;
+    } else {
+        return -1;
+    }
+}
 
 void *doctor(void* parameters)
 {
@@ -23,10 +48,18 @@ void *patient(void* parameters)
 {
     struct patient *p = parameters;
     printf("Patient with id [%d] needs [%d] visits\n", p->id, p->visits);
+
     /*
     while (needs more visits) {
         if (space in queue) {
-            sit in queue
+    */
+            // TODO: ACQUIRE(EMPTY_SLOTS)
+            pthread_mutex_lock(&mutex);
+            enqueue(p->id);
+            printf("%d %d %d\n", queue[0], queue[1], queue[2]);
+            pthread_mutex_unlock(&mutex);
+            // TODO: ACQUIRE(FILLED_SLOTS)
+    /*
         } else {
             wait in lobby and have coffee
         }
