@@ -58,12 +58,12 @@ void enqueue(struct Queue* queue, struct Patient patient)
  
 // Function to remove an item from queue. 
 // It changes front and size
-struct Patient dequeue(struct Queue* queue)
+struct Patient* dequeue(struct Queue* queue)
 {
     // no needed
     /*if (isEmpty(queue))
         return INT_MIN;*/
-    struct Patient patient = queue->array[queue->front];
+    struct Patient* patient = &queue->array[queue->front];
     queue->front = (queue->front + 1)%queue->capacity;
     queue->size = queue->size - 1;
     return patient;
@@ -80,7 +80,16 @@ struct Patient dequeue(struct Queue* queue)
 void *doctor(void* parameters)
 {
     // I'm a doctor I will wait for patients and then will serve the most recently arriving patient
-
+    while(1)
+    {
+        if (! isEmpty(queue) )
+        {
+            struct Patient *patient = dequeue(queue);
+            printf("\tBefore patient %d visits %d\n", patient->id, patient->visits);
+            patient->visits = patient->visits - 1;
+            printf("\tAfter patient %d visits %d\n", patient->id, patient->visits);
+        }
+    }
     return NULL;
 }
 
@@ -97,7 +106,9 @@ void *patient(void* parameters)
         if (! isFull(queue)) 
         {
             enqueue(queue, *p);
+            //TODO suspend thread until doctor wakes it
             pthread_mutex_unlock(&lock);
+            usleep(1000000);
         }
         else
         {
@@ -130,7 +141,8 @@ int main()
     srand((unsigned) time(&t));
 
     /* sets the number of patients to a number between 10 and 20 (inclusive) */
-    int number_of_patients = 10 + (rand() % 11); 
+    int number_of_patients = 1;
+    //int number_of_patients = 10 + (rand() % 11); 
 
     /* creates the array of patients */
     struct Patient patients[number_of_patients];
