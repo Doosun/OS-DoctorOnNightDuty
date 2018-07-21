@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <unistd.h>
 
 #define QUEUE_SIZE 3
 
@@ -52,7 +53,7 @@ void enqueue(struct Queue* queue, struct Patient patient)
     queue->rear = (queue->rear + 1)%queue->capacity;
     queue->array[queue->rear] = patient;
     queue->size = queue->size + 1;
-    printf("patient %d waiting for doctor\n", patient.id);
+    printf("patient %d waiting. Seats occupied = %d\n", patient.id, queue->size);
 }
  
 // Function to remove an item from queue. 
@@ -93,11 +94,19 @@ void *patient(void* parameters)
         // lock
         pthread_mutex_lock(&lock);
 
-        // check queue space
-            // enqueue if room
-        // else go drink coffee
-        // unlock
-        pthread_mutex_unlock(&lock);
+        if (! isFull(queue)) 
+        {
+            enqueue(queue, *p);
+            pthread_mutex_unlock(&lock);
+        }
+        else
+        {
+            pthread_mutex_unlock(&lock);
+            // generate this randomly
+            int waitTime = 1;
+            printf("Patient %d drinking coffee for %d seconds\n", p->id, waitTime);
+            usleep(waitTime*1000000);    
+        }
     }
     
     return NULL;
