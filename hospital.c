@@ -15,7 +15,7 @@ struct Queue
 {
     int front, rear, size;
     unsigned capacity;
-    struct Patient* array;
+    struct Patient** array;
 };
 
 struct Patient {
@@ -45,7 +45,7 @@ int isEmpty(struct Queue* queue)
  
 // Function to add an item to the queue.  
 // It changes rear and size
-void enqueue(struct Queue* queue, struct Patient patient)
+void enqueue(struct Queue* queue, struct Patient *patient)
 {
     // not needex i think
     /*if (isFull(queue))
@@ -53,7 +53,7 @@ void enqueue(struct Queue* queue, struct Patient patient)
     queue->rear = (queue->rear + 1)%queue->capacity;
     queue->array[queue->rear] = patient;
     queue->size = queue->size + 1;
-    printf("patient %d waiting. Seats occupied = %d\n", patient.id, queue->size);
+    printf("patient %d waiting. Seats occupied = %d\n", patient->id, queue->size);
 }
  
 // Function to remove an item from queue. 
@@ -63,9 +63,10 @@ struct Patient* dequeue(struct Queue* queue)
     // no needed
     /*if (isEmpty(queue))
         return INT_MIN;*/
-    struct Patient* patient = &queue->array[queue->front];
+    struct Patient* patient = queue->array[queue->front];
     queue->front = (queue->front + 1)%queue->capacity;
     queue->size = queue->size - 1;
+    printf("Doctor is treating Patient %d\n", patient->id);
     return patient;
 }
  
@@ -98,14 +99,15 @@ void *patient(void* parameters)
     struct Patient *p = parameters;
     printf("Patient with id [%d] needs [%d] visits\n", p->id, p->visits);
 
-    while (p->visits > 0)
+    while (1)
     {
         // lock
         pthread_mutex_lock(&lock);
 
         if (! isFull(queue)) 
         {
-            enqueue(queue, *p);
+            printf("Queueing Patient %d\n", p->id);
+            enqueue(queue, p);
             //TODO suspend thread until doctor wakes it
             pthread_mutex_unlock(&lock);
             usleep(1000000);
@@ -118,7 +120,16 @@ void *patient(void* parameters)
             printf("Patient %d drinking coffee for %d seconds\n", p->id, waitTime);
             usleep(waitTime*1000000);    
         }
+        printf("\t\tVisits is at %d\n", p->visits);
+        // TODO fix program freezing at this comparison 
+        if((p->visits) < 1)
+        {  
+            printf("breaking out of while loop"); 
+            break;
+        }
     }
+
+    printf("Patient %d is done being treated and has completed all doctor visits", p->id);
     
     return NULL;
 }
