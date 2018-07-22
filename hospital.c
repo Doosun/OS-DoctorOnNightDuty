@@ -89,6 +89,8 @@ void *doctor(void* parameters)
             printf("\tBefore patient %d visits %d\n", patient->id, patient->visits);
             patient->visits = patient->visits - 1;
             printf("\tAfter patient %d visits %d\n", patient->id, patient->visits);
+            // Doctor takes some time to treat the patient
+            usleep(1000000);
         }
     }
     return NULL;
@@ -124,12 +126,12 @@ void *patient(void* parameters)
         // TODO fix program freezing at this comparison 
         if((p->visits) < 1)
         {  
-            printf("breaking out of while loop"); 
-            break;
+            printf("breaking out of while loop\n");
+            break; 
         }
     }
 
-    printf("Patient %d is done being treated and has completed all doctor visits", p->id);
+    printf("Patient %d is done being treated and has completed all doctor visits\n", p->id);
     
     return NULL;
 }
@@ -152,7 +154,7 @@ int main()
     srand((unsigned) time(&t));
 
     /* sets the number of patients to a number between 10 and 20 (inclusive) */
-    int number_of_patients = 1;
+    int number_of_patients = 4;
     //int number_of_patients = 10 + (rand() % 11); 
 
     /* creates the array of patients */
