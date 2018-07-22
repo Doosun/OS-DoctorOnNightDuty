@@ -69,14 +69,6 @@ struct Patient* dequeue(struct Queue* queue)
     printf("Doctor is treating Patient %d\n", patient->id);
     return patient;
 }
- 
-// Function to get front of queue
-/*struct Patient* front(struct Queue* queue)
-{
-    if (isEmpty(queue))
-        return ;
-    return queue->array[queue->front];
-}*/
 
 void *doctor(void* parameters)
 {
@@ -190,7 +182,7 @@ int main()
             return join_status;
         }
     }
-
+    // TODO kill doctor thread once all patient threads have returned
     /* join doctor thread */
     int join_status = pthread_join(tid[0], NULL);
     if (join_status > 0) {
