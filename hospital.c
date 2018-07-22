@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@ struct Queue
 struct Patient {
     int id;
     int visits;
+    sem_t semaphore;
 };
  
 // function to create a queue of given capacity. 
@@ -53,7 +55,7 @@ void enqueue(struct Queue* queue, struct Patient *patient)
     queue->rear = (queue->rear + 1)%queue->capacity;
     queue->array[queue->rear] = patient;
     queue->size = queue->size + 1;
-    printf("patient %d waiting. Seats occupied = %d\n", patient->id, queue->size);
+    printf("\t\tPatient %d waiting. Seats occupied = %d\n", patient->id, queue->size);
 }
  
 // Function to remove an item from queue. 
@@ -66,7 +68,6 @@ struct Patient* dequeue(struct Queue* queue)
     struct Patient* patient = queue->array[queue->front];
     queue->front = (queue->front + 1)%queue->capacity;
     queue->size = queue->size - 1;
-    printf("Doctor is treating Patient %d\n", patient->id);
     return patient;
 }
 
@@ -78,11 +79,14 @@ void *doctor(void* parameters)
         if (! isEmpty(queue) )
         {
             struct Patient *patient = dequeue(queue);
-            printf("\tBefore patient %d visits %d\n", patient->id, patient->visits);
+            //printf("\tBefore patient %d visits %d\n", patient->id, patient->visits);
             patient->visits = patient->visits - 1;
-            printf("\tAfter patient %d visits %d\n", patient->id, patient->visits);
+            //printf("\tAfter patient %d visits %d\n", patient->id, patient->visits);
             // Doctor takes some time to treat the patient
-            usleep(1000000);
+            int treatmentTime = 1 + (rand() % 3);
+            printf("Doctor treating patient %d for %d seconds. Seats occupied = %d\n", patient->id, treatmentTime, queue->size);
+            usleep(treatmentTime*1000000);
+            sem_post(&(patient->semaphore));
         }
     }
     return NULL;
@@ -98,27 +102,29 @@ void *patient(void* parameters)
         // lock
         pthread_mutex_lock(&lock);
 
+        sem_init(&(p->semaphore), 0, 1);
+        sem_wait(&(p->semaphore));
         if (! isFull(queue)) 
         {
-            printf("Queueing Patient %d\n", p->id);
+            //printf("Queueing Patient %d\n", p->id);
             enqueue(queue, p);
-            //TODO suspend thread until doctor wakes it
             pthread_mutex_unlock(&lock);
-            usleep(1000000);
+            
+            // Wait for the doctor thread to resume this thread;
+            sem_wait(&(p->semaphore));
+            //printf("\t\tAfter sem_wait for patient %d\n", p->id);
         }
         else
         {
             pthread_mutex_unlock(&lock);
+            sem_post(&(p->semaphore));
             // generate this randomly
-            int waitTime = 1;
-            printf("Patient %d drinking coffee for %d seconds\n", p->id, waitTime);
+            int waitTime = 1 + (rand() %3);
+            printf("\t\tPatient %d drinking coffee for %d seconds\n", p->id, waitTime);
             usleep(waitTime*1000000);    
         }
-        printf("\t\tVisits is at %d\n", p->visits);
-        // TODO fix program freezing at this comparison 
         if((p->visits) < 1)
         {  
-            printf("breaking out of while loop\n");
             break; 
         }
     }
@@ -146,8 +152,8 @@ int main()
     srand((unsigned) time(&t));
 
     /* sets the number of patients to a number between 10 and 20 (inclusive) */
-    int number_of_patients = 4;
-    //int number_of_patients = 10 + (rand() % 11); 
+    //int number_of_patients = 4;
+    int number_of_patients = 5 + (rand() % 6); 
 
     /* creates the array of patients */
     struct Patient patients[number_of_patients];
