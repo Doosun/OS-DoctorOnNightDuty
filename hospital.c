@@ -10,6 +10,7 @@
 
 pthread_mutex_t lock;
 struct Queue* queue;
+int _fCloseDoctorThread;
 
 // A structure to represent a queue
 struct Queue
@@ -74,7 +75,7 @@ struct Patient* dequeue(struct Queue* queue)
 void *doctor(void* parameters)
 {
     // I'm a doctor I will wait for patients and then will serve the most recently arriving patient
-    while(1)
+    while(! _fCloseDoctorThread)
     {
         if (! isEmpty(queue) )
         {
@@ -188,7 +189,9 @@ int main()
             return join_status;
         }
     }
-    // TODO kill doctor thread once all patient threads have returned
+
+    printf("\nAll Patients treated, closing Doctor Thread\n");
+    _fCloseDoctorThread = 1;
     /* join doctor thread */
     int join_status = pthread_join(tid[0], NULL);
     if (join_status > 0) {
@@ -196,8 +199,9 @@ int main()
         return join_status;
     }
 
-    // TODO check from the return status of the threads (tid array)
+   printf("Doctor thread closed, exiting program\n");
 
+    // TODO check from the return status of the threads (tid array)
 
     pthread_mutex_destroy(&lock);
 
