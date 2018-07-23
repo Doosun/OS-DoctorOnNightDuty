@@ -40,7 +40,9 @@ struct Queue* createQueue(unsigned capacity)
  
 // Queue is full when size becomes equal to the capacity 
 int isFull(struct Queue* queue)
-{  return (queue->size == queue->capacity);  }
+{  
+    return (queue->size == queue->capacity);  
+}
  
 // Queue is empty when size is 0
 int isEmpty(struct Queue* queue)
@@ -50,9 +52,6 @@ int isEmpty(struct Queue* queue)
 // It changes rear and size
 void enqueue(struct Queue* queue, struct Patient *patient)
 {
-    // not needex i think
-    /*if (isFull(queue))
-        return;*/
     queue->rear = (queue->rear + 1)%queue->capacity;
     queue->array[queue->rear] = patient;
     queue->size = queue->size + 1;
@@ -63,11 +62,8 @@ void enqueue(struct Queue* queue, struct Patient *patient)
 // It changes front and size
 struct Patient* dequeue(struct Queue* queue)
 {
-    // no needed
-    /*if (isEmpty(queue))
-        return INT_MIN;*/
     struct Patient* patient = queue->array[queue->front];
-    queue->front = (queue->front + 1)%queue->capacity;
+    queue->front = (queue->front + 1) % queue->capacity;
     queue->size = queue->size - 1;
     return patient;
 }
@@ -80,9 +76,7 @@ void *doctor(void* parameters)
         if (! isEmpty(queue) )
         {
             struct Patient *patient = dequeue(queue);
-            //printf("\tBefore patient %d visits %d\n", patient->id, patient->visits);
             patient->visits = patient->visits - 1;
-            //printf("\tAfter patient %d visits %d\n", patient->id, patient->visits);
             // Doctor takes some time to treat the patient
             int treatmentTime = 1 + (rand() % 3);
             printf("Doctor treating patient %d for %d seconds. Seats occupied = %d\n", patient->id, treatmentTime, queue->size);
@@ -113,7 +107,6 @@ void *patient(void* parameters)
             
             // Wait for the doctor thread to resume this thread;
             sem_wait(&(p->semaphore));
-            //printf("\t\tAfter sem_wait for patient %d\n", p->id);
         }
         else
         {
@@ -153,7 +146,6 @@ int main()
     srand((unsigned) time(&t));
 
     /* sets the number of patients to a number between 10 and 20 (inclusive) */
-    //int number_of_patients = 4;
     int number_of_patients = 5 + (rand() % 6); 
 
     /* creates the array of patients */
@@ -163,28 +155,33 @@ int main()
     pthread_t tid[1 + number_of_patients]; 
 
     int create_status = pthread_create(&tid[0], NULL, doctor, NULL);
-    if (create_status > 0) {
+    if (create_status > 0) 
+    {
         printf("Error when creating doctor thread: %d\n", create_status);
         return create_status;
     }
 
     int i;
     /* create patient threads */
-    for (i = 1; i <= number_of_patients ; i++) {
+    for (i = 1; i <= number_of_patients ; i++) 
+    {
         patients[i].id = i;
         /* assign the patient 1 to 5 visits */
         patients[i].visits = 1 + (rand() % 5); 
         int create_status = pthread_create(&tid[i], NULL, patient, &patients[i]);
-        if (create_status > 0) {
+        if (create_status > 0) 
+        {
             printf("Error when creating patient thread[%d]: %d\n", i, create_status);
             return create_status;
         }
     }
 
     /* join patient threads */
-    for (i = 1; i <= number_of_patients; i++) {
+    for (i = 1; i <= number_of_patients; i++) 
+    {
         int join_status = pthread_join(tid[i], NULL);
-        if (join_status > 0) {
+        if (join_status > 0) 
+        {
             printf("Error when joining patient thread[%d]: %d\n", i, join_status);
             return join_status;
         }
@@ -194,15 +191,14 @@ int main()
     _fCloseDoctorThread = 1;
     /* join doctor thread */
     int join_status = pthread_join(tid[0], NULL);
-    if (join_status > 0) {
+    if (join_status > 0) 
+    {
         printf("Error when joining doctor thread: %d\n", join_status);
         return join_status;
     }
 
-   printf("Doctor thread closed, exiting program\n");
-
-    // TODO check from the return status of the threads (tid array)
-
+    printf("Doctor thread closed, exiting program\n");
+    
     pthread_mutex_destroy(&lock);
 
     return 0;
